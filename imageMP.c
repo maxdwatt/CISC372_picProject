@@ -4,14 +4,16 @@
 #include <string.h>
 #include "imageMP.h"
 #include <omp.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-//An array of kernel matrices to be used for image convolution.
-//The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box bl>Matrix algorithms[]={
+//An array of kernel matrices to be used for image convolution.  
+//The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box blur.
+Matrix algorithms[]={
     {{0,-1,0},{-1,4,-1},{0,-1,0}},
     {{0,-1,0},{-1,5,-1},{0,-1,0}},
     {{1/9.0,1/9.0,1/9.0},{1/9.0,1/9.0,1/9.0},{1/9.0,1/9.0,1/9.0}},
@@ -19,6 +21,15 @@
     {{-2,-1,0},{-1,1,1},{0,1,2}},
     {{0,0,0},{0,1,0},{0,0,0}}
 };
+
+
+//getPixelValue - Computes the value of a specific pixel on a specific channel using the selected convolution kernel
+//Paramters: srcImage:  An Image struct populated with the image being convoluted
+//           x: The x coordinate of the pixel
+//          y: The y coordinate of the pixel
+//          bit: The color channel being manipulated
+//          algorithm: The 3x3 kernel matrix to use for the convolution
+//Returns: The new value for this x,y pixel and bit channel
 uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
     int px,mx,py,my,i,span;
     span=srcImage->width*srcImage->bpp;
@@ -40,9 +51,11 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
         algorithm[2][2]*srcImage->data[Index(px,py,srcImage->width,bit,srcImage->bpp)];
     return result;
 }
+
 //convolute:  Applies a kernel matrix to an image
 //Parameters: srcImage: The image being convoluted
-//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted ima>//            algorithm: The kernel matrix to use for the convolution
+//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
+//            algorithm: The kernel matrix to use for the convolution
 //Returns: Nothing
 void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
     int row,pix,bit,span;
@@ -56,6 +69,7 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
         }
     }
 }
+
 //Usage: Prints usage information for the program
 //Returns: -1
 int Usage(){
@@ -75,11 +89,13 @@ enum KernelTypes GetKernelType(char* type){
     else return IDENTITY;
 }
 
-//argv is expected to take 2 arguments.  First is the source file name (can be jpg, png, bmp, tga).  Second is the lower case name o>int main(int argc,char** argv){
+//main:
+//argv is expected to take 2 arguments.  First is the source file name (can be jpg, png, bmp, tga).  Second is the lower case name of the algorithm.
+int main(int argc,char** argv){
     long t1,t2;
     t1=time(NULL);
 
-    stbi_set_flip_vertically_on_load(0);
+    stbi_set_flip_vertically_on_load(0); 
     if (argc!=3) return Usage();
     char* fileName=argv[1];
     if (!strcmp(argv[1],"pic4.jpg")&&!strcmp(argv[2],"gauss")){
@@ -87,7 +103,7 @@ enum KernelTypes GetKernelType(char* type){
     }
     enum KernelTypes type=GetKernelType(argv[2]);
 
-    Image srcImage,destImage,bwImage;
+    Image srcImage,destImage,bwImage;   
     srcImage.data=stbi_load(fileName,&srcImage.width,&srcImage.height,&srcImage.bpp,0);
     if (!srcImage.data){
         printf("Error loading file %s.\n",fileName);
@@ -100,7 +116,7 @@ enum KernelTypes GetKernelType(char* type){
     convolute(&srcImage,&destImage,algorithms[type]);
     stbi_write_png("output.png",destImage.width,destImage.height,destImage.bpp,destImage.data,destImage.bpp*destImage.width);
     stbi_image_free(srcImage.data);
-
+    
     free(destImage.data);
     t2=time(NULL);
     printf("Took %ld seconds\n",t2-t1);
