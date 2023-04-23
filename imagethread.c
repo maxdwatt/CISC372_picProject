@@ -11,7 +11,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-
 typedef struct {
     int id;
     int num_threads;
@@ -20,8 +19,10 @@ typedef struct {
     double (*algorithm)[3];
 } thread_data;
 
-//An array of kernel matrices to be used for image convolution.
-//The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box bl>Matrix algorithms[]={
+
+//An array of kernel matrices to be used for image convolution.  
+//The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box blur.
+Matrix algorithms[]={
     {{0,-1,0},{-1,4,-1},{0,-1,0}},
     {{0,-1,0},{-1,5,-1},{0,-1,0}},
     {{1/9.0,1/9.0,1/9.0},{1/9.0,1/9.0,1/9.0},{1/9.0,1/9.0,1/9.0}},
@@ -29,6 +30,7 @@ typedef struct {
     {{-2,-1,0},{-1,1,1},{0,1,2}},
     {{0,0,0},{0,1,0},{0,0,0}}
 };
+
 
 //getPixelValue - Computes the value of a specific pixel on a specific channel using the selected convolution kernel
 //Paramters: srcImage:  An Image struct populated with the image being convoluted
@@ -58,6 +60,12 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
         algorithm[2][2]*srcImage->data[Index(px,py,srcImage->width,bit,srcImage->bpp)];
     return result;
 }
+
+//convolute:  Applies a kernel matrix to an image
+//Parameters: srcImage: The image being convoluted
+//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
+//            algorithm: The kernel matrix to use for the convolution
+//Returns: Nothing
 void* convolute_thread(void* arg){
         thread_data* data = (thread_data*)arg;
         int row,pix,bit,span;
@@ -92,9 +100,10 @@ enum KernelTypes GetKernelType(char* type){
     else if (!strcmp(type,"emboss")) return EMBOSS;
     else return IDENTITY;
 }
+
 //main:
-//argv is expected to take 2 arguments.  First is the source file name (can be jpg, png, bmp, tga).  Second is the lower case name o>int main(int argc,char** argv){
-int main(int argc,char** argv){                                                                                                                                    
+//argv is expected to take 2 arguments.  First is the source file name (can be jpg, png, bmp, tga).  Second is the lower case name of the algorithm.
+int main(int argc,char** argv){
     long t1,t2;
     t1=time(NULL);
     pthread_t threads[2];
@@ -121,10 +130,7 @@ int main(int argc,char** argv){
     destImage.height=srcImage.height;
     destImage.width=srcImage.width;
     destImage.data=malloc(sizeof(uint8_t)*destImage.width*destImage.bpp*destImage.height);
-    //printf("\nthe height of destimage is %d", destImage.height);
-
-    //printf("We are in main and we havent set variables yet");
-    for(int i = 0; i < num_threads; i++){
+for(int i = 0; i < num_threads; i++){
         //printf("we are making thread %d", i);
         t[i].id = i;
         t[i].srcImage = &srcImage;
@@ -141,7 +147,7 @@ int main(int argc,char** argv){
         //printf("we have joined thread %d",j);
     }
     destImage = *destImage_ptr;
-    //printf("\nwe have joined all of our threads and our deets are still %d,%d,%d\n", destImage.height,destImage.width,destImage.b>    //pthread_exit(NULL);
+    //printf("\nwe have joined all of our threads and our deets are still %d,%d,%d\n", destImage.height, destImage.width,destImage.b>    //pthread_exit(NULL);
     stbi_write_png("output.png",destImage.width,destImage.height,destImage.bpp,destImage.data,destImage.bpp*destImage.width);
     //printf("we have output.png");
     stbi_image_free(srcImage.data);
