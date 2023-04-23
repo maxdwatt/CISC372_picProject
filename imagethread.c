@@ -11,6 +11,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+
 typedef struct {
     int id;
     int num_threads;
@@ -68,20 +69,28 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
 //Returns: Nothing
 void* convolute_thread(void* arg){
         thread_data* data = (thread_data*)arg;
-        int row,pix,bit,span;
-        int start = (data->id * data->srcImage->height) / data->num_threads;
-        int end =  ((data->id + 1) * data->srcImage->height) / data->num_threads;
-        //printf("\nwe are in thread %d and all variables are set", data->id);
+        int row,pix,bit,span,start,end;
+        printf("data srcimage is %d and num rows is %d\n",data->srcImage->height, data->num_threads);
+        if (data->id == 0) {
+                start = 0;
+                end = (data->srcImage->height/data->num_threads);
+                //printf("end here in loop is %d", end);
+        } else if(data->id != 0) {
+                start = (data->id * data->srcImage->height)/data->num_threads;
+                end = start + (data->srcImage->height/data->num_threads);
+        }
+        printf("\nwe are in thread %d and start is %d and end is %d",data->id, start, end);
         for(row = start; row < end; row++){
                 for(pix = 0; pix< data->srcImage->width; pix++){
                         for(bit = 0; bit<data->srcImage->bpp;bit++){
-                                data->destImage->data[Index(pix,row,data->srcImage->width,bit,data->srcImage->bpp)] = getPixelValue(>                        }
+                                data->destImage->data[Index(pix,row,data->srcImage->width,bit,data->srcImage->bpp)] = getPixelValue((data->srcImage,pix,row,bit,data->algorithm);                        }
                 }
         }
         //pthread_exit(NULL);
         //printf("we have left convolute thread from thread %d", data->id);
         return data->destImage;
 }
+
 //Usage: Prints usage information for the program
 //Returns: -1
 int Usage(){
@@ -106,10 +115,10 @@ enum KernelTypes GetKernelType(char* type){
 int main(int argc,char** argv){
     long t1,t2;
     t1=time(NULL);
-    pthread_t threads[2];
-    thread_data t[2];
+    pthread_t threads[4];
+    thread_data t[4];
     //printf("We are in main and we havent set variables yet");
-    int num_threads = 2;
+    int num_threads = 4;
 
     stbi_set_flip_vertically_on_load(0);
     if (argc!=3) return Usage();
@@ -130,12 +139,14 @@ int main(int argc,char** argv){
     destImage.height=srcImage.height;
     destImage.width=srcImage.width;
     destImage.data=malloc(sizeof(uint8_t)*destImage.width*destImage.bpp*destImage.height);
-for(int i = 0; i < num_threads; i++){
+
+    for(int i = 0; i < num_threads; i++){
         //printf("we are making thread %d", i);
         t[i].id = i;
         t[i].srcImage = &srcImage;
         t[i].destImage = &destImage;
         t[i].algorithm = algorithms[type];
+        t[i].num_threads = num_threads;
         pthread_create(&threads[i], NULL, convolute_thread, &t[i]);
         //printf("we made thread %d and its height is %d", t[i].id, t[i].destImage->height);
     }
