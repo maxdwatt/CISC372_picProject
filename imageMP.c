@@ -65,7 +65,7 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
         for (pix=0;pix<srcImage->width;pix++){
             span=srcImage->bpp*srcImage->bpp;
             for (bit=0;bit<srcImage->bpp;bit++){
-                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);;
+                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
             }
         }
     }
