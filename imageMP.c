@@ -59,17 +59,17 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
 //Returns: Nothing
 void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
     int row,pix,bit,span;
-    #pragma omp parallel for num_threads(4)
     span=srcImage->bpp*srcImage->bpp;
+    #pragma omp parallel for num_threads(4)
     for (row=0;row<srcImage->height;row++){
         for (pix=0;pix<srcImage->width;pix++){
+            span=srcImage->bpp*srcImage->bpp;
             for (bit=0;bit<srcImage->bpp;bit++){
                 destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);;
             }
         }
     }
 }
-
 //Usage: Prints usage information for the program
 //Returns: -1
 int Usage(){
