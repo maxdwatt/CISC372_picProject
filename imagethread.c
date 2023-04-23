@@ -94,6 +94,7 @@ enum KernelTypes GetKernelType(char* type){
 }
 //main:
 //argv is expected to take 2 arguments.  First is the source file name (can be jpg, png, bmp, tga).  Second is the lower case name o>int main(int argc,char** argv){
+int main(int argc,char** argv){                                                                                                                                    
     long t1,t2;
     t1=time(NULL);
     pthread_t threads[2];
